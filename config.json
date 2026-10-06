@@ -1,0 +1,9 @@
+{
+    "bot.name": "Anton",
+    "bot.phone": "6283122054460",
+
+    "prefix.cmd": [".", "/", "#"],
+
+    "autoread.status": "on",
+    "autoread.message": "off"
+}
