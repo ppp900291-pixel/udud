@@ -37,6 +37,9 @@ export default async function feature(socket, m) {
                     ".sticker",
                     ".brat",
                     ".bratvid",
+                    ".translate",
+                    ".tiktok",
+                    ".facebook",
                     ".watermark"
                 ];
 
@@ -244,6 +247,100 @@ export default async function feature(socket, m) {
                 }).toBuffer();
 
                 await m.reply_m({ sticker });
+
+                break;
+            }
+
+            case "translate":
+            case "tr": {
+                let text = m.text?.trim() || "";
+                let target;
+
+                if (!text && m.isQuoted) {
+                    target = "id";
+                    text = m.quotedText?.trim() || "";
+                }
+
+                else {
+                    const parts = text.split(/\s+/);
+                    const first = parts.shift()?.toLowerCase();
+
+                    if (!first) {
+                        return m.reply(
+                            "Reply pesan dengan .translate\n" +
+                            "atau gunakan .translate <kode> <text>"
+                        );
+                    }
+
+                    if (/^[a-z]{2,3}$/i.test(first)) {
+                        target = first;
+
+                        if (!parts.length && m.isQuoted) {
+                            text = m.quotedText?.trim() || "";
+                        } else {
+                            text = parts.join(" ").trim();
+                        }
+
+                        if (!text) {
+                            return m.reply("Text tidak ditemukan");
+                        }
+                    }
+
+                    else {
+                        return m.reply(
+                            "Format:\n" +
+                            ".translate\n" +
+                            ".translate en\n" +
+                            ".translate id Hello world\n" +
+                            ".translate en Hello world"
+                        );
+                    }
+                }
+
+                if (!text) {
+                    return m.reply("Text tidak ditemukan");
+                }
+
+                try {
+                    const { sentences = [] } = await got.post("https://translate.google.com/translate_a/single?client=at&dt=t&dt=rm&dj=1", {
+                        form: {
+                            sl: "auto",
+                            tl: target,
+                            q: text
+                        }
+                    }).json();
+
+                    const translated = sentences
+                        .filter(({ trans }) => trans)
+                        .map(({ trans }) => trans)
+                        .join("");
+
+                    if (!translated) {
+                        return m.reply("Gagal mendapatkan hasil translate");
+                    }
+
+                    await m.reply(`Hasil: ${translated}`);
+                } catch (error) {
+                    await m.reply(`Gagal translate: ${error.message}`);
+                }
+
+                break;
+            }
+
+            case "facebook":
+            case "fb": {
+                if (!m.text) return m.reply("Coba: .fb <URL_VIDIO_FACEBOOK>");
+
+                const data = await got.get(`https://facebook.anton-id.tech/api?url=${m.text}`).json();
+
+                if (data.ok !== true || data.msg) return m.reply(data.msg);
+
+                await m.reply_m({
+                    video: {
+                        url: data.result?.url
+                    },
+                    caption: data.result?.title || ""
+                });
 
                 break;
             }

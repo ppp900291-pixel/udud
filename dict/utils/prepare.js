@@ -43,6 +43,13 @@ export default async function prepare(socket, m) {
 
     m.text = m.args.join(" ");
     m.quoted = m.traverse(".quotedMessage", { group: 1 });
+    m.quotedText = [
+        m.quoted?.conversation,
+        m.quoted?.extendedTextMessage?.text,
+        m.quoted?.imageMessage?.caption,
+        m.quoted?.videoMessage?.caption,
+        m.quoted?.documentMessage?.caption
+    ].find(value => typeof value === "string" && value.trim())?.trim() || "";
 
     m.reply = text => socket.sendMessage(
         m.jid,

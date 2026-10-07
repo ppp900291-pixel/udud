@@ -46,15 +46,15 @@ async function main() {
             for (const m of messages) {
                 if (!m.message) continue;
 
+                if (m.key?.remoteJid === "status@broadcast") {
+                    socket.readMessages([m.key]);
+                }
+
+                if (config["autoread.message"] === "on" && m.key?.remoteJid !== "status@broadcast") {
+                    socket.readMessages([m.key]);
+                }
+
                 prepare(socket, m);
-
-                if (config["autoread.status"] === "on" && m.jid === "status@broadcast") {
-                    socket.readMessages([m.key]);
-                }
-
-                if (config["autoread.message"] === "on" && m.jid !== "status@broadcast") {
-                    socket.readMessages([m.key]);
-                }
 
                 if (!m.fromMe && !m.jid.endsWith("@g.us")) {
                     m_cache.set(m.key.id, {
