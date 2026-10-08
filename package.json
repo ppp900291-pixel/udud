@@ -8,13 +8,17 @@
     },
     "dependencies": {
         "@antonthomzz/travex": "latest",
+        "@img/sharp-wasm32": "^0.35.5",
         "@whiskeysockets/baileys": "latest",
+        "brat-canvas": "latest",
         "got": "latest",
         "jsqr": "latest",
         "pino": "latest",
-        "sharp": "latest",
-        "brat-canvas": "latest",
+        "sharp": "^0.35.5",
         "tesseract.js": "latest",
         "wa-sticker-formatter": "latest"
+    },
+    "allowScripts": {
+        "sharp@0.30.7": true
     }
 }

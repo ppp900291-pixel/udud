@@ -292,7 +292,8 @@ export default async function feature(socket, m) {
                 break;
             }
 
-            case "emojimix": {
+            case "emojimix":
+            case "mx": {
                 if (!m.text) {
                     return m.reply("Contoh: .emojimix 😭|😂");
                 }
@@ -302,10 +303,14 @@ export default async function feature(socket, m) {
                 if (!emoji1 || !emoji2) return m.reply("Contoh: .emojimix 😭|😂");
 
                 try {
-                    const response = await got.get(`https://antapi.vercel.app/api?e=${encodeURIComponent(emoji1)}|${encodeURIComponent(emoji2)}`);
+                    const buffer = await got.get(`https://antapi.vercel.app/api?e=${encodeURIComponent(emoji1)}|${encodeURIComponent(emoji2)}`).buffer();
 
-                    if (response.headers["content-type"] === "image/png") {
-                        const sticker = await new Sticker(response.body, {
+                    const buffers = await sharp(buffer)
+                        .png()
+                        .toBuffer();
+
+                    if (buffers) {
+                        const sticker = await new Sticker(buffers, {
                             pack: "Created by",
                             author: config["bot.name"],
                             type: StickerTypes.FULL,
@@ -313,12 +318,9 @@ export default async function feature(socket, m) {
                         }).toBuffer();
 
                         await m.reply_m({ sticker });
-                    } else {
-                        const msg = JSON.parse(response.body)
-                        m.reply(msg.msg || response.body)
                     }
                 } catch (err) {
-                    return m.reply(`${err.statusCode}: ${err.message || "-"}`);
+                    return m.reply("Gagal membuat emojimix -<");
                 }
 
                 break;
