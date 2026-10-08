@@ -29,26 +29,107 @@ export default async function feature(socket, m) {
         if (!(config["prefix.cmd"].some(v => m.body.startsWith(v)))) return;
 
         switch (m.command) {
+            case "menu":
             case "help": {
-                const commands = [
-                    ".toimg",
-                    ".scanqr",
-                    ".ocr",
-                    ".sticker",
-                    ".brat",
-                    ".bratvid",
-                    ".translate",
-                    ".tiktok",
-                    ".facebook",
-                    ".watermark"
-                ];
+                const name = m.pushName || "User";
+                const botName = config["bot.name"];
 
-                const list = [
-                    "*LIST MENU*",
-                    ...commands.map(cmd => `• ${cmd}`)
+                const menu = [
+                    `╭━━━〔 *${botName}* 〕━━━╮`,
+                    `┃  Hello, *${name}* 👋`,
+                    `┃  Welcome to *${botName}*`,
+                    `┃`,
+                    `┣━━〔 *MEDIA* 〕`,
+                    `┃  › .toimg`,
+                    `┃  › .scanqr`,
+                    `┃  › .ocr`,
+                    `┃  › .sticker`,
+                    `┃  › .brat`,
+                    `┃  › .bratvid`,
+                    `┃  › .watermark`,
+                    `┃`,
+                    `┣━━〔 *UTILITY* 〕`,
+                    `┃  › .jid`,
+                    `┃  › .translate`,
+                    `┃`,
+                    `┣━━〔 *DOWNLOADER* 〕`,
+                    `┃  › .tiktok`,
+                    `┃  › .facebook`,
+                    `┃`,
+                    `╰━━━━━━━━━━━━━━━━━━╯\n`,
+                    `  ◦ Prefix  : ${config["prefix.cmd"][0]}`,
+                    `  ◦ Status  : Online`,
+                    `  ◦ User    : ${name}`
                 ].join("\n");
 
-                m.reply(list);
+                m.reply(menu);
+                break;
+            }
+
+            case "jid": {
+                if (!m.text?.trim()) {
+                    return m.reply(
+                        "Usage:\n" +
+                        ".jid 628123456789\n" +
+                        ".jid https://wa.me/628123456789\n" +
+                        ".jid https://chat.whatsapp.com/xxxx"
+                    );
+                }
+
+                const input = m.text.trim();
+
+                try {
+                    let number = input
+                        .replace(/^https?:\/\/wa\.me\//i, "")
+                        .replace(/[^\d]/g, "");
+
+                    if (/^\d{8,15}$/.test(number)) {
+                        const jid = `${number}@s.whatsapp.net`;
+
+                        return m.reply(
+                            `╭─〔 *JID INFO* 〕\n` +
+                            `│\n` +
+                            `│  Type   : *PRIVATE*\n` +
+                            `│  Number : *+${number}*\n` +
+                            `│  JID    : \`${jid}\`\n` +
+                            `│\n` +
+                            `╰──────────────`
+                        );
+                    }
+
+                    if (/chat\.whatsapp\.com\//i.test(input)) {
+                        const code = input.split("chat.whatsapp.com/")[1]?.split(/[?#\s]/)[0];
+
+                        if (!code) return m.reply("Invite link grup tidak valid.");
+
+                        const metadata = await socket.groupGetInviteInfo(code);
+
+                        return m.reply(
+                            `╭─〔 *JID INFO* 〕\n` +
+                            `│\n` +
+                            `│  Type  : *GROUP*\n` +
+                            `│  Name  : *${metadata.subject || "-"}*\n` +
+                            `│  Owner : ${metadata.owner || "-"}\n` +
+                            `│  JID   : \`${metadata.id}\`\n` +
+                            `│\n` +
+                            `╰──────────────`
+                        );
+                    }
+
+                    return m.reply(
+                        "Input tidak dikenali.\n\n" +
+                        "Contoh:\n" +
+                        "• `.jid 628123456789`\n" +
+                        "• `.jid https://wa.me/628123456789`\n" +
+                        "• `.jid https://chat.whatsapp.com/xxxx`"
+                    );
+                } catch (error) {
+                    return m.reply(
+                        `Gagal mendapatkan JID.\n\n` +
+                        `Error: ${error.message}`
+                    );
+                }
+
                 break;
             }
 
