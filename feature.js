@@ -293,29 +293,30 @@ export default async function feature(socket, m) {
             }
 
             case "emojimix": {
-                const text = m.text?.trim();
-
-                if (!text || !text.includes("|")) {
+                if (!m.text) {
                     return m.reply("Contoh: .emojimix 😭|😂");
                 }
 
-                const [emoji1, emoji2] = text.split("|").map(v => v.trim());
+                const [emoji1, emoji2] = m.text.split("|");
 
-                if (!emoji1 || !emoji2) {
-                    return m.reply("Contoh: .emojimix 😭|😂");
-                }
+                if (!emoji1 || !emoji2) return m.reply("Contoh: .emojimix 😭|😂");
 
                 try {
-                    const buffer = await got.get(`https://antapi.vercel.app/api?e=${encodeURIComponent(emoji1)}|${encodeURIComponent(emoji2)}`).buffer();
+                    const response = await got.get(`https://antapi.vercel.app/api?e=${encodeURIComponent(emoji1)}|${encodeURIComponent(emoji2)}`);
 
-                    const sticker = await new Sticker(buffer, {
-                        pack: "Created by",
-                        author: config["bot.name"],
-                        type: StickerTypes.FULL,
-                        quality: 100
-                    }).toBuffer();
+                    if (response.headers["content-type"] === "image/png") {
+                        const sticker = await new Sticker(response.body, {
+                            pack: "Created by",
+                            author: config["bot.name"],
+                            type: StickerTypes.FULL,
+                            quality: 100
+                        }).toBuffer();
 
-                    await m.reply_m({ sticker });
+                        await m.reply_m({ sticker });
+                    } else {
+                        const msg = JSON.parse(response.body)
+                        m.reply(msg.msg || response.body)
+                    }
                 } catch (err) {
                     return m.reply(`${err.statusCode}: ${err.message || "-"}`);
                 }
