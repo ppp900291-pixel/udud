@@ -88,7 +88,7 @@ export default async function feature(socket, m) {
                     return m.reply(metadata.id);
                 }
 
-                m.reply(m.key.remoteJid);
+                m.reply(m.key?.from || m.key?.remoteJid);
 
                 break;
             }
@@ -306,21 +306,7 @@ export default async function feature(socket, m) {
                 }
 
                 try {
-                    const url = `https://antapi.vercel.app/api?e=${encodeURIComponent(emoji1)}%7C${encodeURIComponent(emoji2)}`;
-
-                    const res = await got.get(url, {
-                        responseType: "buffer"
-                    });
-
-                    const contentType = res.headers["content-type"] || "";
-
-                    if (contentType.includes("application/json")) {
-                        const data = JSON.parse(res.body.toString());
-
-                        return m.reply(data.msg || "Gagal membuat EmojiMix");
-                    }
-
-                    const buffer = res.body;
+                    const buffer = await got.get(`https://antapi.vercel.app/api?e=${encodeURIComponent(emoji1)}|${encodeURIComponent(emoji2)}`).buffer();
 
                     const sticker = await new Sticker(buffer, {
                         pack: "Created by",
@@ -331,7 +317,7 @@ export default async function feature(socket, m) {
 
                     await m.reply_m({ sticker });
                 } catch (err) {
-                    return m.reply("Gagal membuat EmojiMix.");
+                    return m.reply(`${err.statusCode}: ${err.message || "-"}`);
                 }
 
                 break;
