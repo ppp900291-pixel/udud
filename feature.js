@@ -46,6 +46,7 @@ export default async function feature(socket, m) {
                     `┃  › .sticker`,
                     `┃  › .brat`,
                     `┃  › .bratvid`,
+                    `┃  › .emojimix`,
                     `┃  › .watermark`,
                     `┃`,
                     `┣━━〔 *UTILITY* 〕`,
@@ -87,7 +88,7 @@ export default async function feature(socket, m) {
                     return m.reply(metadata.id);
                 }
 
-                return m.reply(m.jid);
+                m.reply(m.key.remoteJid);
 
                 break;
             }
@@ -294,29 +295,44 @@ export default async function feature(socket, m) {
             case "emojimix": {
                 const text = m.text?.trim();
 
-                if (!text || !text.includes("|")) return m.reply("Contoh: .emojimix 😭|😂");
+                if (!text || !text.includes("|")) {
+                    return m.reply("Contoh: .emojimix 😭|😂");
+                }
 
                 const [emoji1, emoji2] = text.split("|").map(v => v.trim());
 
-                if (!emoji1 || !emoji2) return m.reply("Contoh: .emojimix 😭|😂");
-
-                const res = await got.get(`https://antapi.vercel.app/api?e=${encodeURIComponent("😭")}|${encodeURIComponent("👻")}`);
-                const buffer = Buffer.from(res.body);
-                const contentType = res.headers["content-type"] || "";
-
-                if (contentType.includes("application/json")) {
-                    const data = JSON.parse(buffer.toString("utf8"));
-                    m.reply(data.msg);
+                if (!emoji1 || !emoji2) {
+                    return m.reply("Contoh: .emojimix 😭|😂");
                 }
 
-                const sticker = await new Sticker(buffer, {
-                    pack: "Created by",
-                    author: config["bot.name"],
-                    type: StickerTypes.FULL,
-                    quality: 100
-                }).toBuffer();
+                try {
+                    const url = `https://antapi.vercel.app/api?e=${encodeURIComponent(emoji1)}%7C${encodeURIComponent(emoji2)}`;
 
-                await m.reply_m({ sticker });
+                    const res = await got.get(url, {
+                        responseType: "buffer"
+                    });
+
+                    const contentType = res.headers["content-type"] || "";
+
+                    if (contentType.includes("application/json")) {
+                        const data = JSON.parse(res.body.toString());
+
+                        return m.reply(data.msg || "Gagal membuat EmojiMix");
+                    }
+
+                    const buffer = res.body;
+
+                    const sticker = await new Sticker(buffer, {
+                        pack: "Created by",
+                        author: config["bot.name"],
+                        type: StickerTypes.FULL,
+                        quality: 100
+                    }).toBuffer();
+
+                    await m.reply_m({ sticker });
+                } catch (err) {
+                    return m.reply("Gagal membuat EmojiMix.");
+                }
 
                 break;
             }
@@ -399,7 +415,7 @@ export default async function feature(socket, m) {
             case "fb": {
                 if (!m.text) return m.reply("Coba: .fb <URL_VIDIO_FACEBOOK>");
 
-                const data = await got.get(`https://facebook.anton-id.tech/api?url=${m.text}`).json();
+                const data = await got.get(`https://fbfb-nu.vercel.app/api?url=${m.text}`).json();
 
                 if (data.ok !== true || data.msg) return m.reply(data.msg);
 
