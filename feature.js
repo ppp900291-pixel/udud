@@ -67,68 +67,27 @@ export default async function feature(socket, m) {
             }
 
             case "jid": {
-                if (!m.text?.trim()) {
-                    return m.reply(
-                        "Usage:\n" +
-                        ".jid 628123456789\n" +
-                        ".jid https://wa.me/628123456789\n" +
-                        ".jid https://chat.whatsapp.com/xxxx"
-                    );
-                }
+                if (!m.text?.trim()) return;
 
                 const input = m.text.trim();
 
-                try {
-                    let number = input
-                        .replace(/^https?:\/\/wa\.me\//i, "")
-                        .replace(/[^\d]/g, "");
+                let number = input
+                    .replace(/^https?:\/\/wa\.me\//i, "")
+                    .replace(/[^\d]/g, "");
 
-                    if (/^\d{8,15}$/.test(number)) {
-                        const jid = `${number}@s.whatsapp.net`;
+                if (/^\d{8,15}$/.test(number)) return m.reply(`${number}@s.whatsapp.net`);
 
-                        return m.reply(
-                            `╭─〔 *JID INFO* 〕\n` +
-                            `│\n` +
-                            `│  Type   : *PRIVATE*\n` +
-                            `│  Number : *+${number}*\n` +
-                            `│  JID    : \`${jid}\`\n` +
-                            `│\n` +
-                            `╰──────────────`
-                        );
-                    }
+                if (/chat\.whatsapp\.com\//i.test(input)) {
+                    const code = input.split("chat.whatsapp.com/")[1]?.split(/[?#\s]/)[0];
 
-                    if (/chat\.whatsapp\.com\//i.test(input)) {
-                        const code = input.split("chat.whatsapp.com/")[1]?.split(/[?#\s]/)[0];
+                    if (!code) return;
 
-                        if (!code) return m.reply("Invite link grup tidak valid.");
+                    const metadata = await socket.groupGetInviteInfo(code);
 
-                        const metadata = await socket.groupGetInviteInfo(code);
-
-                        return m.reply(
-                            `╭─〔 *JID INFO* 〕\n` +
-                            `│\n` +
-                            `│  Type  : *GROUP*\n` +
-                            `│  Name  : *${metadata.subject || "-"}*\n` +
-                            `│  Owner : ${metadata.owner || "-"}\n` +
-                            `│  JID   : \`${metadata.id}\`\n` +
-                            `│\n` +
-                            `╰──────────────`
-                        );
-                    }
-
-                    return m.reply(
-                        "Input tidak dikenali.\n\n" +
-                        "Contoh:\n" +
-                        "• `.jid 628123456789`\n" +
-                        "• `.jid https://wa.me/628123456789`\n" +
-                        "• `.jid https://chat.whatsapp.com/xxxx`"
-                    );
-                } catch (error) {
-                    return m.reply(
-                        `Gagal mendapatkan JID.\n\n` +
-                        `Error: ${error.message}`
-                    );
+                    return m.reply(metadata.id);
                 }
+
+                return m.reply(m.jid);
 
                 break;
             }
@@ -206,7 +165,7 @@ export default async function feature(socket, m) {
                             <text
                                 x="${x}"
                                 y="${y}"
-                                font-family="Arial, Helvetica, sans-serif"
+                                font-family="DejaVu Sans"
                                 font-size="${fontSize}px"
                                 font-weight="700"
                                 letter-spacing="-0.5"
@@ -332,6 +291,36 @@ export default async function feature(socket, m) {
                 break;
             }
 
+            case "emojimix": {
+                const text = m.text?.trim();
+
+                if (!text || !text.includes("|")) return m.reply("Contoh: .emojimix 😭|😂");
+
+                const [emoji1, emoji2] = text.split("|").map(v => v.trim());
+
+                if (!emoji1 || !emoji2) return m.reply("Contoh: .emojimix 😭|😂");
+
+                const res = await got.get(`https://antapi.vercel.app/api?e=${encodeURIComponent("😭")}|${encodeURIComponent("👻")}`);
+                const buffer = Buffer.from(res.body);
+                const contentType = res.headers["content-type"] || "";
+
+                if (contentType.includes("application/json")) {
+                    const data = JSON.parse(buffer.toString("utf8"));
+                    m.reply(data.msg);
+                }
+
+                const sticker = await new Sticker(buffer, {
+                    pack: "Created by",
+                    author: config["bot.name"],
+                    type: StickerTypes.FULL,
+                    quality: 100
+                }).toBuffer();
+
+                await m.reply_m({ sticker });
+
+                break;
+            }
+
             case "translate":
             case "tr": {
                 let text = m.text?.trim() || "";
@@ -378,9 +367,7 @@ export default async function feature(socket, m) {
                     }
                 }
 
-                if (!text) {
-                    return m.reply("Text tidak ditemukan");
-                }
+                if (!text) return m.reply("Text tidak ditemukan");
 
                 try {
                     const { sentences = [] } = await got.post("https://translate.google.com/translate_a/single?client=at&dt=t&dt=rm&dj=1", {

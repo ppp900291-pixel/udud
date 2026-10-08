@@ -1,18 +1,18 @@
 {
     "name": "bot-whatsapp",
-    "version": "1.0.0",
+    "version": "1.0.2",
     "main": "main.js",
-    "author": "anton",
     "type": "module",
+    "scripts": {
+        "start": "node main.js"
+    },
     "dependencies": {
         "@antonthomzz/travex": "latest",
         "@whiskeysockets/baileys": "latest",
-
         "got": "latest",
         "jsqr": "latest",
         "pino": "latest",
         "sharp": "latest",
-
         "brat-canvas": "latest",
         "tesseract.js": "latest",
         "wa-sticker-formatter": "latest"
