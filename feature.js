@@ -404,8 +404,13 @@ export default async function feature(socket, m) {
             case "ytmp3":
             case "yt-mp3": {
                 if (!m.text) return;
-                const buffer = await got.get(`https://ytmp3-production-a6c3.up.railway.app/yt-mp3?url=${m.text}`).buffer();
-                await m.reply_m({ audio: buffer });
+                try {
+                    const { body: audio } = await got.get(`https://ytmp3-production-a6c3.up.railway.app/yt-mp3?url=${encodeURIComponent(m.text)}`);
+                    await m.reply_m({ audio });
+                } catch (e) {
+                    m.reply(e.message);
+                }
+                break;
             }
 
             case "facebook":
