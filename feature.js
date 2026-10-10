@@ -400,6 +400,14 @@ export default async function feature(socket, m) {
                 break;
             }
 
+            case "youtube-mp3":
+            case "ytmp3":
+            case "yt-mp3": {
+                if (!m.text) return;
+                const buffer = await got.get(`https://ytmp3-production-a6c3.up.railway.app/yt-mp3?url=${m.text}`).buffer();
+                await m.reply_m({ audio: buffer });
+            }
+
             case "facebook":
             case "fb": {
                 if (!m.text) return m.reply("Coba: .fb <URL_VIDIO_FACEBOOK>");
